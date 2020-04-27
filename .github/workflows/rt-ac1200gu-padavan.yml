@@ -1,0 +1,68 @@
+# This is a basic workflow to help you get started with Actions
+
+name: rt-ac1200gu-padavan
+
+# Controls when the action will run. Triggers the workflow on push or pull request
+# events but only for the master branch
+#on:
+#  push:
+#    branches: [ master ]
+#  pull_request:
+#    branches: [ master ]
+
+on: 
+  release:
+    types: [published]
+  push:
+    tags:
+    - 'v*'
+  watch:
+    types: [started]
+    
+    # A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "build"
+  build:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-18.04
+    if: github.event.repository.owner.id == github.event.sender.id
+    
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+    # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+    - name: Checkout
+      uses: actions/checkout@master
+    - name: Initialization environment
+      env:
+        DEBIAN_FRONTEND: noninteractive
+      run: |
+        sudo apt update
+        sudo apt install unzip libtool-bin curl cmake gperf gawk flex bison nano xxd \
+        cpio git python-docutils gettext automake autopoint texinfo build-essential help2man \
+        pkg-config zlib1g-dev libgmp3-dev libmpc-dev libmpfr-dev libncurses5-dev libltdl-dev wget
+    - name: Clone source code
+      run: |
+        git clone --depth=1 https://github.com/Wiilz/rt-n56u.git /opt/rt-n56u
+        cd /opt/rt-n56u/toolchain-mipsel
+        sh dl_toolchain.sh
+    - name: Build Firmware
+      env:
+        TNAME: RT-AC1200GU
+      run: |
+        cd /opt/rt-n56u/trunk
+        if [ ! -f configs/templates/$TNAME.config ] ; then
+        echo "configs/templates/$TNAME.config not found "
+        exit 1
+        fi
+        sudo ./clear_tree
+        sudo ./build_firmware_modify $TNAME
+        mkdir -p /opt/images/
+        sudo mv -f images/*.trx /opt/images/
+    - name : Upload packages
+      uses: actions/upload-artifact@master
+      if: always()
+      with:
+        name: Padavan-packages
+        path: /opt/images
+
+
