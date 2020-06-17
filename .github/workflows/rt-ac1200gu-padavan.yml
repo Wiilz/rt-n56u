@@ -37,9 +37,10 @@ jobs:
         DEBIAN_FRONTEND: noninteractive
       run: |
         sudo apt update
-        sudo apt install unzip libtool-bin curl cmake gperf gawk flex bison nano xxd \
+        sudo apt install unzip libtool-bin curl cmake gperf gawk flex bison nano xxd fakeroot \
         cpio git python-docutils gettext automake autopoint texinfo build-essential help2man \
-        pkg-config zlib1g-dev libgmp3-dev libmpc-dev libmpfr-dev libncurses5-dev libltdl-dev wget
+        pkg-config zlib1g-dev libgmp3-dev libmpc-dev libmpfr-dev libncurses5-dev libltdl-dev wget \
+        module-init-tools
     - name: Clone source code
       run: |
         git clone --depth=1 https://github.com/Wiilz/rt-n56u.git /opt/rt-n56u
@@ -55,7 +56,7 @@ jobs:
         exit 1
         fi
         sudo ./clear_tree
-        sudo ./build_firmware_modify $TNAME
+        fakeroot ./build_firmware_modify $TNAME
         mkdir -p /opt/images/
         sudo mv -f images/*.trx /opt/images/
     - name : Upload packages
